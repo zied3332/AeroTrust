@@ -2,6 +2,7 @@
 import WorkspaceLayout from './layouts/WorkspaceLayout'
 import TopBar from './components/TopBar'
 import NavigationRail from './components/NavigationRail'
+import EntitySidebar from './components/EntitySidebar'
 function App() {
   return (
     <WorkspaceLayout
@@ -10,17 +11,7 @@ function App() {
 
       navigation={<NavigationRail />}
 
-      sidebar={
-        <div className="p-3">
-          <h2 className="text-[12px] font-medium text-[#e4e4e7]">
-            Entity Explorer
-          </h2>
-
-          <p className="mt-2 text-[11px] text-[#71717a]">
-            Aviation asset categories
-          </p>
-        </div>
-      }
+     sidebar={<EntitySidebar />}
 
       workspace={
         <div className="relative flex h-full w-full flex-col">
