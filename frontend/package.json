@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@react-sigma/core": "^6.0.0",
     "@tailwindcss/vite": "^4.3.5",
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
@@ -19,7 +18,7 @@
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.7",
     "recharts": "^3.11.1",
-    "sigma": "^4.0.6",
+    "sigma": "^3.0.3",
     "tailwindcss": "^4.3.5",
     "zustand": "^5.1.0"
   },
