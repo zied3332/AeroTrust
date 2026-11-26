@@ -1,5 +1,6 @@
 
 import { useState } from 'react'
+
 import {
   Search,
   Plane,
@@ -21,48 +22,66 @@ import {
   SlidersHorizontal,
 } from 'lucide-react'
 
+import {
+  generateAviationData,
+  getDatasetStatistics,
+} from '../data/generateAviationData'
+
+import type { EntityType } from '../types/aviation'
+
+// ========================================
+// DATASET
+// ========================================
+
+const dataset = generateAviationData(42)
+const statistics = getDatasetStatistics(dataset)
+
+// ========================================
+// ENTITY CATEGORIES
+// ========================================
+
 const categories = [
   {
     id: 'aircraft',
     label: 'Aircraft',
     icon: Plane,
-    color: '#67e8f9',
+    color: '#a5f3fc',
   },
   {
     id: 'engines',
     label: 'Engines',
     icon: Cog,
-    color: '#60a5fa',
+    color: '#67e8f9',
   },
   {
     id: 'components',
     label: 'Components',
     icon: Boxes,
-    color: '#818cf8',
+    color: '#4d9fb5',
   },
   {
     id: 'manufacturers',
     label: 'Manufacturers',
     icon: Factory,
-    color: '#c084fc',
+    color: '#a5b4fc',
   },
   {
     id: 'airlines',
     label: 'Airlines',
     icon: Building2,
-    color: '#2dd4bf',
+    color: '#5eead4',
   },
   {
     id: 'facilities',
     label: 'Maintenance Facilities',
     icon: Wrench,
-    color: '#fbbf24',
+    color: '#7dd3fc',
   },
   {
     id: 'inspections',
     label: 'Inspection Records',
     icon: ClipboardCheck,
-    color: '#4ade80',
+    color: '#6ee7b7',
   },
   {
     id: 'passports',
@@ -76,7 +95,11 @@ const categories = [
     icon: ShieldCheck,
     color: '#38bdf8',
   },
-]
+] as const
+
+// ========================================
+// SAVED VIEWS
+// ========================================
 
 const savedViews = [
   {
@@ -99,21 +122,30 @@ const savedViews = [
   },
 ]
 
+// ========================================
+// ENTITY SIDEBAR
+// ========================================
+
 export default function EntitySidebar() {
   const [search, setSearch] = useState('')
-  const [categoriesOpen, setCategoriesOpen] = useState(true)
-  const [savedViewsOpen, setSavedViewsOpen] = useState(true)
+
+  const [categoriesOpen, setCategoriesOpen] =
+    useState(true)
+
+  const [savedViewsOpen, setSavedViewsOpen] =
+    useState(true)
 
   const [hiddenCategories, setHiddenCategories] =
-    useState<string[]>([])
+    useState<EntityType[]>([])
 
-  const filteredCategories = categories.filter((category) =>
-    category.label
-      .toLowerCase()
-      .includes(search.trim().toLowerCase()),
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.label
+        .toLowerCase()
+        .includes(search.trim().toLowerCase()),
   )
 
-  function toggleVisibility(id: string) {
+  function toggleVisibility(id: EntityType) {
     setHiddenCategories((previous) =>
       previous.includes(id)
         ? previous.filter((item) => item !== id)
@@ -125,9 +157,10 @@ export default function EntitySidebar() {
     <div className="flex h-full min-h-0 flex-col">
 
       {/* Header */}
-      <div className="border-b border-[#242429] px-3 py-3">
+      <div className="shrink-0 border-b border-[#242429] px-3 py-3">
 
         <div className="mb-3 flex items-center justify-between">
+
           <h2 className="text-[12px] font-semibold">
             Entity Explorer
           </h2>
@@ -136,6 +169,7 @@ export default function EntitySidebar() {
             size={14}
             className="text-[#71717a]"
           />
+
         </div>
 
         {/* Category search */}
@@ -144,20 +178,27 @@ export default function EntitySidebar() {
           border border-[#323238] bg-[#09090b] px-2
           focus-within:border-[#4a9eaf]
         ">
-          <Search size={13} className="text-[#71717a]" />
+
+          <Search
+            size={13}
+            className="text-[#71717a]"
+          />
 
           <input
             type="text"
             aria-label="Search entity categories"
-            placeholder="Search entities..."
+            placeholder="Search categories..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             className="
               min-w-0 flex-1 bg-transparent
               text-[11px] text-[#e4e4e7]
               outline-none placeholder:text-[#71717a]
             "
           />
+
         </div>
 
       </div>
@@ -178,21 +219,31 @@ export default function EntitySidebar() {
           <div className="grid grid-cols-2 gap-3">
 
             <div>
-              <div className="text-xl font-semibold text-[#8cdae8]">
-                0
+
+              <div className="text-xl font-semibold tabular-nums text-[#8cdae8]">
+
+                {statistics.totalEntities.toLocaleString()}
+
               </div>
+
               <div className="text-[10px] text-[#71717a]">
                 Entities
               </div>
+
             </div>
 
             <div>
-              <div className="text-xl font-semibold">
-                0
+
+              <div className="text-xl font-semibold tabular-nums">
+
+                {statistics.totalRelationships.toLocaleString()}
+
               </div>
+
               <div className="text-[10px] text-[#71717a]">
                 Relationships
               </div>
+
             </div>
 
           </div>
@@ -205,19 +256,29 @@ export default function EntitySidebar() {
           <button
             type="button"
             aria-expanded={categoriesOpen}
-            onClick={() => setCategoriesOpen(!categoriesOpen)}
+            onClick={() =>
+              setCategoriesOpen(!categoriesOpen)
+            }
             className="
               flex w-full items-center gap-2 px-3 py-2
               text-[11px] font-medium text-[#a1a1aa]
               hover:bg-[#18181b]
             "
           >
+
             {categoriesOpen
               ? <ChevronDown size={13} />
               : <ChevronRight size={13} />
             }
 
             Asset Categories
+
+            <span className="ml-auto text-[10px] text-[#52525b]">
+
+              {categories.length}
+
+            </span>
+
           </button>
 
           {categoriesOpen && (
@@ -225,7 +286,12 @@ export default function EntitySidebar() {
 
               {filteredCategories.map((category) => {
                 const Icon = category.icon
-                const isHidden = hiddenCategories.includes(category.id)
+
+                const isHidden =
+                  hiddenCategories.includes(category.id)
+
+                const count =
+                  statistics.categories[category.id]
 
                 return (
                   <div
@@ -236,6 +302,7 @@ export default function EntitySidebar() {
                       ${isHidden ? 'opacity-40' : ''}
                     `}
                   >
+
                     <ChevronRight
                       size={11}
                       className="shrink-0 text-[#52525b]"
@@ -255,24 +322,39 @@ export default function EntitySidebar() {
                       {category.label}
                     </span>
 
-                    <span className="text-[10px] text-[#71717a]">
-                      0
+                    {/* Actual category count */}
+                    <span className="
+                      min-w-6 text-right
+                      text-[10px] tabular-nums
+                      text-[#a1a1aa]
+                    ">
+
+                      {count.toLocaleString()}
+
                     </span>
 
                     <button
                       type="button"
                       aria-label={`${isHidden ? 'Show' : 'Hide'} ${category.label}`}
-                      title={isHidden ? 'Show category' : 'Hide category'}
-                      onClick={() => toggleVisibility(category.id)}
+                      title={
+                        isHidden
+                          ? 'Show category'
+                          : 'Hide category'
+                      }
+                      onClick={() =>
+                        toggleVisibility(category.id)
+                      }
                       className="
                         shrink-0 text-[#71717a]
                         hover:text-[#8cdae8]
                       "
                     >
+
                       {isHidden
                         ? <EyeOff size={13} />
                         : <Eye size={13} />
                       }
+
                     </button>
 
                   </div>
@@ -280,9 +362,11 @@ export default function EntitySidebar() {
               })}
 
               {filteredCategories.length === 0 && (
+
                 <p className="px-4 py-3 text-[11px] text-[#71717a]">
                   No matching categories
                 </p>
+
               )}
 
             </div>
@@ -296,19 +380,23 @@ export default function EntitySidebar() {
           <button
             type="button"
             aria-expanded={savedViewsOpen}
-            onClick={() => setSavedViewsOpen(!savedViewsOpen)}
+            onClick={() =>
+              setSavedViewsOpen(!savedViewsOpen)
+            }
             className="
               flex w-full items-center gap-2 px-3 py-2
               text-[11px] font-medium text-[#a1a1aa]
               hover:bg-[#18181b]
             "
           >
+
             {savedViewsOpen
               ? <ChevronDown size={13} />
               : <ChevronRight size={13} />
             }
 
             Saved Views
+
           </button>
 
           {savedViewsOpen && (
@@ -329,10 +417,11 @@ export default function EntitySidebar() {
                       ${
                         isActive
                           ? 'bg-[#18272e] text-[#8cdae8]'
-                          : 'text-[#a1a1aa]'
+                          : 'text-[#a1a1aa] opacity-50'
                       }
                     `}
                   >
+
                     <Icon
                       size={14}
                       strokeWidth={1.6}
@@ -356,19 +445,33 @@ export default function EntitySidebar() {
 
       {/* Data source footer */}
       <div className="
-        flex items-center gap-2
+        flex shrink-0 items-center gap-2
         border-t border-[#242429] p-3
       ">
-        <Database size={13} className="text-[#71717a]" />
 
-        <div>
+        <Database
+          size={13}
+          className="text-[#71717a]"
+        />
+
+        <div className="min-w-0 flex-1">
+
           <p className="text-[10px] text-[#a1a1aa]">
             Synthetic Aviation Dataset
           </p>
-          <p className="text-[9px] text-[#71717a]">
-            Awaiting initialization
-          </p>
+
+          <div className="mt-1 flex items-center gap-1.5">
+
+            <span className="h-1.5 w-1.5 rounded-full bg-[#4ade80]" />
+
+            <p className="text-[9px] text-[#71717a]">
+              Dataset initialized
+            </p>
+
+          </div>
+
         </div>
+
       </div>
 
     </div>
