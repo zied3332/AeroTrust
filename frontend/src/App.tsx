@@ -1,121 +1,103 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
 
+import WorkspaceLayout from './layouts/WorkspaceLayout'
+import TopBar from './components/TopBar'
+import NavigationRail from './components/NavigationRail'
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+    <WorkspaceLayout
+
+      header={<TopBar />}
+
+      navigation={<NavigationRail />}
+
+      sidebar={
+        <div className="p-3">
+          <h2 className="text-[12px] font-medium text-[#e4e4e7]">
+            Entity Explorer
+          </h2>
+
+          <p className="mt-2 text-[11px] text-[#71717a]">
+            Aviation asset categories
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      }
 
-      <div className="ticks"></div>
+      workspace={
+        <div className="relative flex h-full w-full flex-col">
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          {/* Workspace toolbar */}
+          <div className="flex h-10 shrink-0 items-center border-b border-[#242429] bg-[#111114] px-4">
+
+            <span className="text-[12px] text-[#a1a1aa]">
+              Global Asset Network
+            </span>
+
+          </div>
+
+          {/* Future graph canvas */}
+          <div
+            className="relative flex flex-1 items-center justify-center"
+            style={{
+              backgroundImage:
+                'radial-gradient(#242429 0.7px, transparent 0.7px)',
+              backgroundSize: '24px 24px',
+            }}
+          >
+            <div className="text-center">
+
+              <h1 className="text-lg font-medium text-[#e4e4e7]">
+                Aviation Knowledge Graph
+              </h1>
+
+              <p className="mt-2 text-[12px] text-[#71717a]">
+                Graph engine not initialized
+              </p>
+
+            </div>
+          </div>
+
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      inspector={
+        <div className="p-3">
+
+          <h2 className="text-[12px] font-medium text-[#e4e4e7]">
+            Entity Inspector
+          </h2>
+
+          <p className="mt-2 text-[11px] text-[#71717a]">
+            No entity selected
+          </p>
+
+        </div>
+      }
+
+      statusBar={
+        <div className="flex h-full items-center justify-between px-3 text-[10px] text-[#71717a]">
+
+          <div className="flex items-center gap-2">
+
+            <span className="h-1.5 w-1.5 rounded-full bg-[#4ade80]" />
+
+            <span>Frontend online</span>
+
+            <span className="text-[#323238]">|</span>
+
+            <span>Synthetic data workspace</span>
+
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span>0 Entities</span>
+            <span>0 Relationships</span>
+            <span>AeroTrust v0.1.0</span>
+          </div>
+
+        </div>
+      }
+
+    />
   )
 }
 
