@@ -25,6 +25,8 @@ import type {
   EntityType,
 } from '../../types/aviation'
 
+import { useGraphStore } from '../../store/useGraphStore'
+
 // ========================================
 // TYPES
 // ========================================
@@ -181,12 +183,41 @@ export default function GraphCanvas({
     let hoveredNode: string | null = null
 
     // ====================================
+    // CATEGORY FILTER STATE
+    // ====================================
+
+    let hiddenCategories = new Set<EntityType>(
+      useGraphStore.getState().hiddenCategories,
+    )
+
+    function isCategoryHidden(node: string) {
+      const entityType = graph.getNodeAttribute(
+        node,
+        'entityType',
+      )
+
+      return hiddenCategories.has(entityType)
+    }
+
+    // ====================================
     // VISIBILITY RULES
     // ====================================
 
     function isNodeVisible(node: string) {
       const attributes =
         graph.getNodeAttributes(node)
+
+      // Category filters have the highest priority.
+      // Hidden categories cannot be revealed by
+      // selection, neighborhood or zoom.
+
+      if (
+        hiddenCategories.has(
+          attributes.entityType,
+        )
+      ) {
+        return false
+      }
 
       if (
         selectedNode === node ||
@@ -216,6 +247,9 @@ export default function GraphCanvas({
     function isEdgeVisible(edge: string) {
       const source = graph.source(edge)
       const target = graph.target(edge)
+
+      // Relationships are hidden whenever
+      // either endpoint is hidden.
 
       if (
         !isNodeVisible(source) ||
@@ -307,7 +341,7 @@ export default function GraphCanvas({
           context,
           data,
         ) => {
-          if (!data.label) return
+          if (!data.label || data.hidden) return
 
           const fontSize = 11
 
@@ -406,6 +440,9 @@ export default function GraphCanvas({
           )
 
           if (result.hidden) {
+            result.forceLabel = false
+            result.label = ''
+
             return result
           }
 
@@ -530,8 +567,6 @@ export default function GraphCanvas({
             source === selectedNode ||
             target === selectedNode
           ) {
-            result.hidden = false
-
             result.color = '#67e8f9'
 
             result.size = 1.2
@@ -606,6 +641,8 @@ export default function GraphCanvas({
 
       graph.forEachNode(
         (node, attributes) => {
+          // Filtered nodes must not produce glow.
+
           if (!isNodeVisible(node)) {
             return
           }
@@ -722,6 +759,76 @@ export default function GraphCanvas({
     }
 
     // ====================================
+    // CLEAR SELECTION HELPER
+    // ====================================
+
+    function clearSelection() {
+      selectedNode = null
+
+      hoveredNode = null
+
+      connectedNodes.clear()
+
+      container!.style.cursor = 'default'
+
+      selectionCallbackRef.current?.(
+        null,
+      )
+    }
+
+    // ====================================
+    // CATEGORY FILTER SUBSCRIPTION
+    // ====================================
+
+    const unsubscribeFilters =
+      useGraphStore.subscribe(
+        (state, previousState) => {
+          // Ignore unrelated store updates.
+
+          if (
+            state.hiddenCategories ===
+            previousState.hiddenCategories
+          ) {
+            return
+          }
+
+          hiddenCategories =
+            new Set<EntityType>(
+              state.hiddenCategories,
+            )
+
+          // Clear the inspector if the selected
+          // entity belongs to a hidden category.
+
+          if (
+            selectedNode &&
+            isCategoryHidden(selectedNode)
+          ) {
+            clearSelection()
+          }
+
+          // Remove hover state when a hovered
+          // entity becomes hidden.
+
+          if (
+            hoveredNode &&
+            isCategoryHidden(hoveredNode)
+          ) {
+            hoveredNode = null
+
+            container.style.cursor = 'default'
+          }
+
+          // Refresh without recreating the graph,
+          // changing coordinates or moving camera.
+
+          renderer.refresh()
+
+          updateStatistics()
+        },
+      )
+
+    // ====================================
     // CAMERA AND ZOOM LEVELS
     // ====================================
 
@@ -786,15 +893,7 @@ export default function GraphCanvas({
       },
 
       reset: () => {
-        selectedNode = null
-
-        hoveredNode = null
-
-        connectedNodes.clear()
-
-        selectionCallbackRef.current?.(
-          null,
-        )
+        clearSelection()
 
         camera.animate(
           {
@@ -821,6 +920,10 @@ export default function GraphCanvas({
     renderer.on(
       'enterNode',
       ({ node }) => {
+        if (!isNodeVisible(node)) {
+          return
+        }
+
         hoveredNode = node
 
         container.style.cursor = 'pointer'
@@ -844,6 +947,10 @@ export default function GraphCanvas({
     renderer.on(
       'clickNode',
       ({ node }) => {
+        if (!isNodeVisible(node)) {
+          return
+        }
+
         selectedNode = node
 
         connectedNodes = new Set(
@@ -871,15 +978,7 @@ export default function GraphCanvas({
     // ====================================
 
     renderer.on('clickStage', () => {
-      selectedNode = null
-
-      hoveredNode = null
-
-      connectedNodes.clear()
-
-      selectionCallbackRef.current?.(
-        null,
-      )
+      clearSelection()
 
       renderer.refresh()
 
@@ -894,6 +993,10 @@ export default function GraphCanvas({
       'doubleClickNode',
       ({ node, event }) => {
         event.preventSigmaDefault()
+
+        if (!isNodeVisible(node)) {
+          return
+        }
 
         const displayData =
           renderer.getNodeDisplayData(
@@ -933,6 +1036,8 @@ export default function GraphCanvas({
         synthetic: true,
 
         renderer: 'Sigma.js',
+
+        categoryFilters: true,
       },
     )
 
@@ -941,6 +1046,11 @@ export default function GraphCanvas({
     // ====================================
 
     return () => {
+      // Remove the Zustand subscription
+      // before destroying the renderer.
+
+      unsubscribeFilters()
+
       controlsRef.current = null
 
       camera.removeListener(
