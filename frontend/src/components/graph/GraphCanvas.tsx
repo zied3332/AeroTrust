@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react'
 
 import Sigma from 'sigma'
@@ -777,56 +776,76 @@ export default function GraphCanvas({
     }
 
     // ====================================
-    // CATEGORY FILTER SUBSCRIPTION
+    // SHARED SELECTION AND NAVIGATION
     // ====================================
 
-    const unsubscribeFilters =
-      useGraphStore.subscribe(
-        (state, previousState) => {
-          // Ignore unrelated store updates.
+    function selectEntity(node: string) {
+      if (!graph.hasNode(node) || isCategoryHidden(node)) {
+        return false
+      }
 
-          if (
-            state.hiddenCategories ===
-            previousState.hiddenCategories
-          ) {
-            return
-          }
+      selectedNode = node
+      hoveredNode = null
+      connectedNodes = new Set(graph.neighbors(node))
+      container!.style.cursor = 'default'
 
-          hiddenCategories =
-            new Set<EntityType>(
-              state.hiddenCategories,
-            )
+      selectionCallbackRef.current?.(
+        graph.getNodeAttribute(node, 'entity'),
+      )
 
-          // Clear the inspector if the selected
-          // entity belongs to a hidden category.
+      renderer.refresh()
+      updateStatistics()
+      return true
+    }
 
-          if (
-            selectedNode &&
-            isCategoryHidden(selectedNode)
-          ) {
+    function focusEntity(node: string) {
+      const displayData = renderer.getNodeDisplayData(node)
+      if (!displayData) return
+
+      camera.animate(
+        { x: displayData.x, y: displayData.y, ratio: 0.25 },
+        { duration: 450 },
+      )
+    }
+
+    function handleNavigationRequest() {
+      const request = useGraphStore.getState().navigationRequest
+      if (!request) return
+
+      if (selectEntity(request.entityId)) {
+        focusEntity(request.entityId)
+      }
+
+      // Consume only this request, not a newer one.
+      if (useGraphStore.getState().navigationRequest === request) {
+        useGraphStore.getState().clearNavigationRequest()
+      }
+    }
+
+    const unsubscribeFilters = useGraphStore.subscribe(
+      (state, previousState) => {
+        if (state.hiddenCategories !== previousState.hiddenCategories) {
+          hiddenCategories = new Set(state.hiddenCategories)
+
+          if (selectedNode && isCategoryHidden(selectedNode)) {
             clearSelection()
           }
 
-          // Remove hover state when a hovered
-          // entity becomes hidden.
-
-          if (
-            hoveredNode &&
-            isCategoryHidden(hoveredNode)
-          ) {
+          if (hoveredNode && isCategoryHidden(hoveredNode)) {
             hoveredNode = null
-
             container.style.cursor = 'default'
           }
 
-          // Refresh without recreating the graph,
-          // changing coordinates or moving camera.
-
           renderer.refresh()
-
           updateStatistics()
-        },
-      )
+        }
+
+        if (state.navigationRequest &&
+            state.navigationRequest !== previousState.navigationRequest) {
+          handleNavigationRequest()
+        }
+      },
+    )
 
     // ====================================
     // CAMERA AND ZOOM LEVELS
@@ -951,25 +970,7 @@ export default function GraphCanvas({
           return
         }
 
-        selectedNode = node
-
-        connectedNodes = new Set(
-          graph.neighbors(node),
-        )
-
-        const entity =
-          graph.getNodeAttribute(
-            node,
-            'entity',
-          )
-
-        selectionCallbackRef.current?.(
-          entity,
-        )
-
-        renderer.refresh()
-
-        updateStatistics()
+        selectEntity(node)
       },
     )
 
@@ -998,23 +999,7 @@ export default function GraphCanvas({
           return
         }
 
-        const displayData =
-          renderer.getNodeDisplayData(
-            node,
-          )
-
-        if (!displayData) return
-
-        camera.animate(
-          {
-            x: displayData.x,
-            y: displayData.y,
-            ratio: 0.25,
-          },
-          {
-            duration: 450,
-          },
-        )
+        focusEntity(node)
       },
     )
 
@@ -1025,6 +1010,8 @@ export default function GraphCanvas({
     updateStatistics()
 
     renderer.refresh()
+
+    handleNavigationRequest()
 
     console.info(
       'AeroTrust renderer initialized',
@@ -1038,6 +1025,7 @@ export default function GraphCanvas({
         renderer: 'Sigma.js',
 
         categoryFilters: true,
+        entityNavigation: true,
       },
     )
 

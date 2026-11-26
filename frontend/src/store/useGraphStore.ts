@@ -4,10 +4,22 @@ import { create } from 'zustand'
 import type { EntityType } from '../types/aviation'
 
 // ========================================
+// NAVIGATION TYPES
+// ========================================
+
+export interface EntityNavigationRequest {
+  entityId: string
+  entityType: EntityType
+  requestId: number
+}
+
+// ========================================
 // GRAPH STORE TYPES
 // ========================================
 
 interface GraphStore {
+  // Category visibility
+
   hiddenCategories: EntityType[]
 
   toggleCategory: (category: EntityType) => void
@@ -21,6 +33,19 @@ interface GraphStore {
   showAllCategories: () => void
 
   resetFilters: () => void
+
+  // Entity navigation
+
+  navigationRequest: EntityNavigationRequest | null
+
+  navigationSequence: number
+
+  navigateToEntity: (
+    entityId: string,
+    entityType: EntityType,
+  ) => void
+
+  clearNavigationRequest: () => void
 }
 
 // ========================================
@@ -44,11 +69,11 @@ const ALL_CATEGORIES: EntityType[] = [
 // ========================================
 
 export const useGraphStore = create<GraphStore>((set) => ({
-  // All categories are enabled initially.
+  // ======================================
+  // CATEGORY VISIBILITY
+  // ======================================
 
   hiddenCategories: [],
-
-  // Toggle category visibility.
 
   toggleCategory: (category) =>
     set((state) => ({
@@ -60,8 +85,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
           : [...state.hiddenCategories, category],
     })),
 
-  // Hide a specific category.
-
   hideCategory: (category) =>
     set((state) => ({
       hiddenCategories:
@@ -69,8 +92,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
           ? state.hiddenCategories
           : [...state.hiddenCategories, category],
     })),
-
-  // Show a specific category.
 
   showCategory: (category) =>
     set((state) => ({
@@ -80,24 +101,60 @@ export const useGraphStore = create<GraphStore>((set) => ({
         ),
     })),
 
-  // Hide every category.
-
   hideAllCategories: () =>
     set({
       hiddenCategories: [...ALL_CATEGORIES],
     }),
-
-  // Show every category.
 
   showAllCategories: () =>
     set({
       hiddenCategories: [],
     }),
 
-  // Restore default visibility.
-
   resetFilters: () =>
     set({
       hiddenCategories: [],
+    }),
+
+  // ======================================
+  // ENTITY NAVIGATION
+  // ======================================
+
+  navigationRequest: null,
+
+  navigationSequence: 0,
+
+  navigateToEntity: (entityId, entityType) =>
+    set((state) => {
+      const requestId =
+        state.navigationSequence + 1
+
+      return {
+        // Automatically enable the category
+        // of the requested entity.
+
+        hiddenCategories:
+          state.hiddenCategories.includes(entityType)
+            ? state.hiddenCategories.filter(
+                (category) =>
+                  category !== entityType,
+              )
+            : state.hiddenCategories,
+
+        // Generate a unique navigation request.
+
+        navigationSequence: requestId,
+
+        navigationRequest: {
+          entityId,
+          entityType,
+          requestId,
+        },
+      }
+    }),
+
+  clearNavigationRequest: () =>
+    set({
+      navigationRequest: null,
     }),
 }))
